@@ -360,7 +360,9 @@ export default function App() {
           <div className="rules-mini">
             牌型：豹子 &gt; 同花顺 &gt; 金花 &gt; 顺子 &gt; 对子 &gt; 散牌
             <br />
-            <span className="rules-note">（注意：本游戏 金花 &gt; 顺子）</span>
+            <span className="rules-note">
+              （注意：本游戏 金花 &gt; 顺子；闲家与庄家同大时庄家胜）
+            </span>
           </div>
 
           <div className="setup-block">
@@ -512,13 +514,13 @@ export default function App() {
             {round.matches.map((m) => (
               <li key={m.name} className={m.dealerWin ? 'win' : 'lose'}>
                 VS {m.name} {m.dealerWin ? '✅' : m.tie ? '➖' : '❌'}
-                {m.tie ? <span className="tie-note">（平局不计庄家赢）</span> : null}
+                {m.tie ? <span className="tie-note">（同大庄胜）</span> : null}
               </li>
             ))}
           </ul>
           <div className="stats">
             胜：{round.dealerWins} 负：{round.losses}
-            {round.ties > 0 ? ` 平：${round.ties}` : ''} · 胜率：
+            {round.ties > 0 ? `（其中同大庄胜：${round.ties}）` : ''} · 胜率：
             {Math.round(round.winRate * 100)}%
           </div>
 

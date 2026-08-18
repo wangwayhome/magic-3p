@@ -267,13 +267,16 @@ describe('发牌与牌堆消耗', () => {
     expect(() => playRound(fullDeck().slice(0, 3), ['A', 'B'])).toThrow();
   });
 
-  it('平局不计入庄家胜利', () => {
-    // 构造必平局：庄家与闲家手牌点数相同、共享底牌 → 最佳想象牌结果相同
+  it('玩家与庄家同大时计为庄家胜利', () => {
+    // 构造同大：庄家与闲家手牌点数相同、共享底牌 → 最佳想象牌结果相同
     const deck = [c(5, '♠'), c(5, '♥'), c(9, '♣')]; // 庄家5♠ 闲家5♥ 底牌9♣
     const { round } = playRound(deck, ['P1']);
     expect(round.matches[0].tie).toBe(true);
-    expect(round.dealerWins).toBe(0);
-    expect(round.winRate).toBe(0);
+    expect(round.matches[0].dealerWin).toBe(true);
+    expect(round.dealerWins).toBe(1);
+    expect(round.losses).toBe(0);
+    expect(round.winRate).toBe(1);
+    expect(round.passed).toBe(true);
   });
 
   it('庄闲结算严格按金花大于顺子：庄家金花击败闲家顺子', () => {

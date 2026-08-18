@@ -13,9 +13,9 @@ export interface SeatResult {
 
 export interface MatchResult {
   name: string;
-  /** 庄家是否获胜（严格大于才算赢，平局不算） */
+  /** 庄家是否获胜（大于或同大均算庄家赢） */
   dealerWin: boolean;
-  /** 是否平局（牌型完全相同） */
+  /** 牌型是否完全同大（同大时仍计庄家赢） */
   tie: boolean;
 }
 
@@ -118,12 +118,13 @@ export function playRound(
   // 闲家只和庄家比，闲家之间不互相比
   const matches: MatchResult[] = players.map((p) => {
     const cmp = compareEval(dealer.magic.eval, p.magic.eval);
-    return { name: p.name, dealerWin: cmp > 0, tie: cmp === 0 };
+    return { name: p.name, dealerWin: cmp >= 0, tie: cmp === 0 };
   });
 
   const dealerWins = matches.filter((m) => m.dealerWin).length;
   const ties = matches.filter((m) => m.tie).length;
   const total = players.length;
+  const losses = matches.filter((m) => !m.dealerWin).length;
   const winRate = calculateDealerWinRate(matches);
 
   return {
@@ -134,7 +135,7 @@ export function playRound(
       matches,
       dealerWins,
       ties,
-      losses: total - dealerWins - ties,
+      losses,
       total,
       winRate,
       passed: isDealerPassed(winRate),
