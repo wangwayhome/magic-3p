@@ -14,7 +14,9 @@ import {
   calculateDealerWinRate,
   canDealRound,
   cardsNeeded,
+  hasOpenedEnough,
   isDealerPassed,
+  openedCardsNeeded,
   playRound,
 } from './state';
 
@@ -207,6 +209,22 @@ describe('70% 过关规则', () => {
   it('恰好 0.7 → 过关', () => {
     expect(isDealerPassed(0.7)).toBe(true);
     expect(isDealerPassed(0.69999)).toBe(false);
+  });
+});
+
+describe('70% 开牌门槛', () => {
+  it('人数 1-10 时均向上取整到至少 70%', () => {
+    const expected = [1, 2, 3, 3, 4, 5, 5, 6, 7, 7];
+    expect(expected.map((_, i) => openedCardsNeeded(i + 1))).toEqual(expected);
+  });
+
+  it('10 人需开 7 人，4 人需开 3 人', () => {
+    expect(openedCardsNeeded(10)).toBe(7);
+    expect(openedCardsNeeded(4)).toBe(3);
+    expect(hasOpenedEnough(7, 10)).toBe(true);
+    expect(hasOpenedEnough(6, 10)).toBe(false);
+    expect(hasOpenedEnough(3, 4)).toBe(true);
+    expect(hasOpenedEnough(2, 4)).toBe(false);
   });
 });
 

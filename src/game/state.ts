@@ -36,6 +36,19 @@ export interface RoundData {
 /** 过关线：庄家胜率 >= 70% */
 export const PASS_LINE = 0.7;
 
+/** 可提前进入下一轮所需的最少已开闲家牌数（达到 70%，不足一人时向上取整） */
+export function openedCardsNeeded(playerCount: number): number {
+  return Math.ceil(playerCount * PASS_LINE);
+}
+
+/** 已开闲家牌是否达到可提前进入下一轮的门槛 */
+export function hasOpenedEnough(
+  openedCount: number,
+  playerCount: number,
+): boolean {
+  return playerCount > 0 && openedCount >= openedCardsNeeded(playerCount);
+}
+
 /** 计算庄家胜率 = 庄家赢的局数 / 闲家总数 */
 export function calculateDealerWinRate(results: MatchResult[]): number {
   if (results.length === 0) return 0;

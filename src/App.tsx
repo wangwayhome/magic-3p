@@ -7,6 +7,8 @@ import {
   RoundData,
   canDealRound,
   cardsNeeded,
+  hasOpenedEnough,
+  openedCardsNeeded,
   playRound,
 } from './game/state';
 
@@ -327,6 +329,14 @@ export default function App() {
     finishRound();
   };
 
+  /** 达到开牌门槛后，提前结束展示并进入下一轮 */
+  const continueToNextRound = () => {
+    if (!round || !canDealRound(deck, names.length)) return;
+    clearTimers();
+    recordRound(round, roundNum);
+    dealNext(deck, names);
+  };
+
   /* ---------- 结算推导 ---------- */
   const showResult = stage === 'result' && !!round;
   const canContinue =
@@ -388,6 +398,12 @@ export default function App() {
     stage === 'reveal' || stage === 'await' || stage === 'result';
   const dealerDreaming = stage === 'dream';
   const openedCount = playerOpened.filter(Boolean).length;
+  const openedRequired = openedCardsNeeded(names.length);
+  const canDealEarly =
+    stage === 'await' &&
+    hasOpenedEnough(openedCount, names.length) &&
+    !round.passed &&
+    canDealRound(deck, names.length);
 
   const badgeFor = (name: string): 'dealer-win' | 'player-win' | 'tie' => {
     const m = round.matches.find((x) => x.name === name);
@@ -455,7 +471,19 @@ export default function App() {
 
       {stage === 'await' && openedCount < names.length && (
         <div className="await-hint">
-          👑 庄家有请：点开闲家的牌（已开 {openedCount}/{names.length}）
+          👑 庄家有请：点开闲家的牌（已开 {openedCount}/{names.length}，开满{' '}
+          {openedRequired} 张可继续发牌）
+        </div>
+      )}
+
+      {canDealEarly && (
+        <div className="early-deal">
+          <span>
+            已开 {openedCount}/{names.length} 张闲家牌，达到 70% 开牌门槛
+          </span>
+          <button className="primary" onClick={continueToNextRound}>
+            🎴 继续发牌
+          </button>
         </div>
       )}
 
@@ -513,7 +541,7 @@ export default function App() {
                 {Math.round((PASS_LINE - round.winRate) * 100)}%
               </div>
               <p className="verdict-sub">未达到 70%，庄家继续挑战！</p>
-              <button className="primary big" onClick={() => dealNext(deck, names)}>
+              <button className="primary big" onClick={continueToNextRound}>
                 💤 继续做梦
               </button>
               <p className="hint">
