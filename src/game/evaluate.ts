@@ -1,14 +1,14 @@
 // 炸金花牌型判定与比较
-// 牌型大小（本游戏自定义规则）：豹子 > 同花顺 > 顺子 > 金花 > 对子 > 散牌
-// 注意：顺子 > 金花（与部分地区规则相反，必须严格遵守）
+// 牌型大小：豹子 > 同花顺 > 金花 > 顺子 > 对子 > 散牌
+// 注意：金花 > 顺子，必须严格遵守
 
 import { Card, rankLabel } from './cards';
 
 export const HAND_TYPES = {
   BAOZI: 6, // 豹子
   TONGHUASHUN: 5, // 同花顺
-  SHUNZI: 4, // 顺子
-  JINHUA: 3, // 金花
+  JINHUA: 4, // 金花
+  SHUNZI: 3, // 顺子
   DUIZI: 2, // 对子
   SANPAI: 1, // 散牌
 } as const;
@@ -18,8 +18,8 @@ export type HandType = (typeof HAND_TYPES)[keyof typeof HAND_TYPES];
 export const TYPE_NAMES: Record<HandType, string> = {
   6: '豹子',
   5: '同花顺',
-  4: '顺子',
-  3: '金花',
+  4: '金花',
+  3: '顺子',
   2: '对子',
   1: '散牌',
 };
@@ -81,23 +81,23 @@ export function evaluateHand(cards: Card[]): HandEval {
     };
   }
 
-  // 3. 顺子（本游戏：顺子 > 金花）
-  if (straightHigh > 0) {
-    return {
-      type: HAND_TYPES.SHUNZI,
-      typeName: TYPE_NAMES[4],
-      values: [straightHigh],
-      detail: `顺子${seqLabel(straightHigh)}`,
-    };
-  }
-
-  // 4. 金花
+  // 3. 金花（本游戏：金花 > 顺子）
   if (flush) {
     return {
       type: HAND_TYPES.JINHUA,
-      typeName: TYPE_NAMES[3],
+      typeName: TYPE_NAMES[4],
       values: ranks,
       detail: `金花${ranks.map(rankLabel).join('')}`,
+    };
+  }
+
+  // 4. 顺子
+  if (straightHigh > 0) {
+    return {
+      type: HAND_TYPES.SHUNZI,
+      typeName: TYPE_NAMES[3],
+      values: [straightHigh],
+      detail: `顺子${seqLabel(straightHigh)}`,
     };
   }
 

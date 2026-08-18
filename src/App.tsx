@@ -348,9 +348,9 @@ export default function App() {
             🎴 闲家手牌全程盖住，由庄家逐个点开，翻开才见分晓。
           </p>
           <div className="rules-mini">
-            牌型：豹子 &gt; 同花顺 &gt; 顺子 &gt; 金花 &gt; 对子 &gt; 散牌
+            牌型：豹子 &gt; 同花顺 &gt; 金花 &gt; 顺子 &gt; 对子 &gt; 散牌
             <br />
-            <span className="rules-note">（注意：本游戏 顺子 &gt; 金花）</span>
+            <span className="rules-note">（注意：本游戏 金花 &gt; 顺子）</span>
           </div>
 
           <div className="setup-block">

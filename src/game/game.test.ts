@@ -3,7 +3,12 @@
 
 import { describe, expect, it } from 'vitest';
 import { Card, Suit, fullDeck, shuffle } from './cards';
-import { compareEval, compareHands, evaluateHand } from './evaluate';
+import {
+  HAND_TYPES,
+  compareEval,
+  compareHands,
+  evaluateHand,
+} from './evaluate';
 import { findBestMagicCard } from './magic';
 import {
   calculateDealerWinRate,
@@ -25,19 +30,39 @@ describe('牌型判定', () => {
     expect(evaluateHand([c(3, '♠'), c(7, '♥'), c(11, '♣')]).typeName).toBe('散牌');
   });
 
-  it('牌型顺序：豹子 > 同花顺 > 顺子 > 金花 > 对子 > 散牌（顺子 > 金花！）', () => {
+  it('用户示例牌均按指定牌型识别', () => {
+    const examples: Array<[Card[], string]> = [
+      [[c(14, '♠'), c(14, '♥'), c(14, '♣')], '豹子'], // AAA
+      [[c(7, '♠'), c(7, '♥'), c(7, '♣')], '豹子'], // 777
+      [[c(11, '♠'), c(12, '♠'), c(13, '♠')], '同花顺'], // ♠JQK
+      [[c(5, '♥'), c(6, '♥'), c(7, '♥')], '同花顺'], // ♥567
+      [[c(4, '♠'), c(8, '♠'), c(11, '♠')], '金花'], // ♠48J
+      [[c(5, '♠'), c(6, '♥'), c(7, '♦')], '顺子'], // 异花567
+      [[c(11, '♠'), c(12, '♥'), c(13, '♦')], '顺子'], // 异花JQK
+      [[c(6, '♠'), c(6, '♥'), c(9, '♣')], '对子'], // 669
+      [[c(14, '♠'), c(14, '♥'), c(3, '♣')], '对子'], // AA3
+      [[c(3, '♠'), c(5, '♥'), c(7, '♣')], '散牌'], // 357
+      [[c(2, '♠'), c(7, '♥'), c(11, '♣')], '散牌'], // 27J
+    ];
+
+    for (const [cards, expectedType] of examples) {
+      expect(evaluateHand(cards).typeName).toBe(expectedType);
+    }
+  });
+
+  it('牌型顺序：豹子 > 同花顺 > 金花 > 顺子 > 对子 > 散牌', () => {
     const baozi = evaluateHand([c(2, '♠'), c(2, '♥'), c(2, '♣')]); // 最小豹子222
     const tonghua = evaluateHand([c(14, '♠'), c(2, '♠'), c(3, '♠')]); // 最小同花顺A23
-    const shunzi = evaluateHand([c(14, '♠'), c(2, '♥'), c(3, '♦')]); // 最小顺子A23
-    const jinhua = evaluateHand([c(14, '♠'), c(11, '♠'), c(9, '♠')]); // 最大金花 AJ9（不连续，避免成为同花顺）
+    const jinhua = evaluateHand([c(4, '♠'), c(8, '♠'), c(11, '♠')]); // 金花48J
+    const shunzi = evaluateHand([c(12, '♠'), c(13, '♥'), c(14, '♦')]); // 最大顺子QKA
     const duizi = evaluateHand([c(14, '♠'), c(14, '♥'), c(13, '♣')]); // 最大对子AAK
     const sanpai = evaluateHand([c(14, '♠'), c(12, '♥'), c(10, '♦')]); // 散牌AQ10（不连续，避免成为顺子）
 
     expect(compareEval(baozi, tonghua)).toBeGreaterThan(0);
-    expect(compareEval(tonghua, shunzi)).toBeGreaterThan(0);
-    // 关键：顺子 > 金花（即使是最小顺子 vs 最大金花）
-    expect(compareEval(shunzi, jinhua)).toBeGreaterThan(0);
-    expect(compareEval(jinhua, duizi)).toBeGreaterThan(0);
+    expect(compareEval(tonghua, jinhua)).toBeGreaterThan(0);
+    // 关键：即使金花点数较小，也必须大于最大顺子
+    expect(compareEval(jinhua, shunzi)).toBeGreaterThan(0);
+    expect(compareEval(shunzi, duizi)).toBeGreaterThan(0);
     expect(compareEval(duizi, sanpai)).toBeGreaterThan(0);
   });
 
@@ -48,8 +73,8 @@ describe('牌型判定', () => {
     const s234 = evaluateHand([c(2, '♠'), c(3, '♥'), c(4, '♦')]);
     const a23 = evaluateHand([c(14, '♠'), c(2, '♥'), c(3, '♦')]);
 
-    expect(qka.type).toBe(4);
-    expect(a23.type).toBe(4);
+    expect(qka.type).toBe(HAND_TYPES.SHUNZI);
+    expect(a23.type).toBe(HAND_TYPES.SHUNZI);
     expect(compareEval(qka, jqk)).toBeGreaterThan(0);
     expect(compareEval(jqk, tjq)).toBeGreaterThan(0);
     expect(compareEval(s234, a23)).toBeGreaterThan(0);
@@ -129,7 +154,7 @@ describe('findBestMagicCard（提示词第二十一节必测用例）', () => {
 
   it('5♠ + 7♥ 不同花时无法同花顺，最优是普通顺子', () => {
     const r = findBestMagicCard(c(5, '♠'), c(7, '♥'));
-    expect(r.handType).toBe(4); // 顺子，不是同花顺
+    expect(r.handType).toBe(HAND_TYPES.SHUNZI); // 顺子，不是同花顺
   });
 
   it('返回结构包含全部要求字段', () => {
@@ -231,5 +256,19 @@ describe('发牌与牌堆消耗', () => {
     expect(round.matches[0].tie).toBe(true);
     expect(round.dealerWins).toBe(0);
     expect(round.winRate).toBe(0);
+  });
+
+  it('庄闲结算严格按金花大于顺子：庄家金花击败闲家顺子', () => {
+    // 庄家4♠ + 公共8♠ 可组成金花；闲家6♥ + 公共8♠ 最优为顺子678
+    const deck = [c(4, '♠'), c(6, '♥'), c(8, '♠')];
+    const { round } = playRound(deck, ['P1']);
+
+    expect(round.dealer.magic.handType).toBe(HAND_TYPES.JINHUA);
+    expect(round.players[0].magic.handType).toBe(HAND_TYPES.SHUNZI);
+    expect(round.matches[0]).toEqual({
+      name: 'P1',
+      dealerWin: true,
+      tie: false,
+    });
   });
 });
